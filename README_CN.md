@@ -113,21 +113,68 @@ CHAT_MODEL=deepseek-v3                         # 或 gpt-4, qwen-max 等
 REASONING_MODEL=deepseek-v3
 ```
 
-### 3. 准备 Qlib 数据
+### 3. 准备数据
 
-QuantaAlpha 使用微软的 [Qlib](https://github.com/microsoft/qlib) 作为金融数据引擎。你需要 A 股市场数据，覆盖 **2016-2025 年**：
+QuantaAlpha 需要两类数据：**Qlib 行情数据**（用于回测）和**预计算的价量 HDF5 文件**（用于因子挖掘）。我们已将所有数据上传至 HuggingFace，方便下载使用。
+
+> **数据集地址**：[https://huggingface.co/datasets/QuantaAlpha/qlib_csi300](https://huggingface.co/datasets/QuantaAlpha/qlib_csi300)
+
+| 文件 | 说明 | 用途 |
+| :--- | :--- | :--- |
+| `cn_data.zip` | Qlib 原始行情数据（A 股，2016–2025） | Qlib 初始化 & 回测必需 |
+| `daily_pv.h5` | 预计算的完整价量数据 | 因子挖掘必需 |
+| `daily_pv_debug.h5` | 预计算的调试子集（数据量较小） | 因子挖掘（调试/验证）必需 |
+
+> **为什么同时提供 HDF5 文件？** 系统可以在首次运行时从 Qlib 数据自动生成 `daily_pv.h5`，但该过程非常耗时。直接下载预计算好的 HDF5 文件可以大幅节省时间。
+
+#### 第一步：下载数据
 
 ```bash
-# 方式 A：使用 qlib 内置数据下载
-python -c "
-import qlib
-from qlib.contrib.data.handler import Alpha158
-qlib.init(provider_uri='~/.qlib/qlib_data/cn_data', region='cn')
-"
+# 方式 A：使用 huggingface-cli（推荐）
+pip install huggingface_hub
+huggingface-cli download QuantaAlpha/qlib_csi300 --repo-type dataset --local-dir ./hf_data
 
-# 方式 B：如果你已有 Qlib 数据，将 QLIB_DATA_DIR 指向它即可
-# 目录需包含 calendars/、features/、instruments/ 子目录
+# 方式 B：使用 wget
+mkdir -p hf_data
+wget -P hf_data https://huggingface.co/datasets/QuantaAlpha/qlib_csi300/resolve/main/cn_data.zip
+wget -P hf_data https://huggingface.co/datasets/QuantaAlpha/qlib_csi300/resolve/main/daily_pv.h5
+wget -P hf_data https://huggingface.co/datasets/QuantaAlpha/qlib_csi300/resolve/main/daily_pv_debug.h5
 ```
+
+#### 第二步：解压并放置文件
+
+```bash
+# 1. 解压 Qlib 数据
+unzip hf_data/cn_data.zip -d ./data/qlib
+
+# 2. 将 HDF5 文件放置到默认数据目录
+mkdir -p git_ignore_folder/factor_implementation_source_data
+mkdir -p git_ignore_folder/factor_implementation_source_data_debug
+
+cp hf_data/daily_pv.h5       git_ignore_folder/factor_implementation_source_data/daily_pv.h5
+cp hf_data/daily_pv_debug.h5  git_ignore_folder/factor_implementation_source_data_debug/daily_pv.h5
+```
+
+> **注意**：`daily_pv_debug.h5` 放入调试目录时需重命名为 `daily_pv.h5`。
+
+#### 第三步：在 `.env` 中配置路径
+
+```bash
+# 指向解压后的 Qlib 数据目录（需包含 calendars/、features/、instruments/ 子目录）
+QLIB_DATA_DIR=./data/qlib/cn_data
+
+# 实验结果输出目录
+DATA_RESULTS_DIR=./data/results
+```
+
+HDF5 数据目录也可以通过环境变量自定义（如果你希望放在其他位置）：
+
+```bash
+# 可选：自定义 HDF5 数据路径
+FACTOR_CoSTEER_DATA_FOLDER=/your/custom/path/factor_source_data
+FACTOR_CoSTEER_DATA_FOLDER_DEBUG=/your/custom/path/factor_source_data_debug
+```
+
 
 ### 4. 运行因子挖掘
 
