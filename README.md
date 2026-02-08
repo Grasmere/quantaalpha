@@ -112,20 +112,66 @@ CHAT_MODEL=deepseek-v3                         # or gpt-4, qwen-max, etc.
 REASONING_MODEL=deepseek-v3
 ```
 
-### 3. Prepare Qlib Data
+### 3. Prepare Data
 
-QuantaAlpha uses [Qlib](https://github.com/microsoft/qlib) for financial data. You need A-share market data covering **2016-2025**:
+QuantaAlpha requires two types of data: **Qlib market data** (for backtesting) and **pre-computed price-volume HDF5 files** (for factor mining). We provide all of them on HuggingFace for convenience.
+
+> **Dataset**: [https://huggingface.co/datasets/QuantaAlpha/qlib_csi300](https://huggingface.co/datasets/QuantaAlpha/qlib_csi300)
+
+| File | Description | Size | Usage |
+| :--- | :--- | :--- | :--- |
+| `cn_data.zip` | Qlib raw market data (A-share, 2016–2025) | — | Required for Qlib initialization & backtesting |
+| `daily_pv.h5` | Pre-computed full price-volume data | — | Required for factor mining |
+| `daily_pv_debug.h5` | Pre-computed debug subset (smaller) | — | Required for factor mining (debug/validation) |
+
+> **Why provide HDF5 files?** The system can auto-generate `daily_pv.h5` from Qlib data on first run, but this process is very slow. Downloading pre-built HDF5 files saves significant time.
+
+#### Step 1: Download
 
 ```bash
-# Option A: Use qlib's built-in data download
-python -c "
-import qlib
-from qlib.contrib.data.handler import Alpha158
-qlib.init(provider_uri='~/.qlib/qlib_data/cn_data', region='cn')
-"
+# Option A: Using huggingface-cli (recommended)
+pip install huggingface_hub
+huggingface-cli download QuantaAlpha/qlib_csi300 --repo-type dataset --local-dir ./hf_data
 
-# Option B: If you already have Qlib data, point QLIB_DATA_DIR to it
-# The directory should contain: calendars/, features/, instruments/ subdirectories
+# Option B: Using wget
+mkdir -p hf_data
+wget -P hf_data https://huggingface.co/datasets/QuantaAlpha/qlib_csi300/resolve/main/cn_data.zip
+wget -P hf_data https://huggingface.co/datasets/QuantaAlpha/qlib_csi300/resolve/main/daily_pv.h5
+wget -P hf_data https://huggingface.co/datasets/QuantaAlpha/qlib_csi300/resolve/main/daily_pv_debug.h5
+```
+
+#### Step 2: Extract & Place Files
+
+```bash
+# 1. Extract Qlib data
+unzip hf_data/cn_data.zip -d ./data/qlib
+
+# 2. Place HDF5 files into the default data directories
+mkdir -p git_ignore_folder/factor_implementation_source_data
+mkdir -p git_ignore_folder/factor_implementation_source_data_debug
+
+cp hf_data/daily_pv.h5       git_ignore_folder/factor_implementation_source_data/daily_pv.h5
+cp hf_data/daily_pv_debug.h5  git_ignore_folder/factor_implementation_source_data_debug/daily_pv.h5
+```
+
+> **Note**: `daily_pv_debug.h5` must be renamed to `daily_pv.h5` when placed in the debug directory.
+
+#### Step 3: Configure Paths in `.env`
+
+```bash
+# Point to the extracted Qlib data directory (must contain calendars/, features/, instruments/)
+QLIB_DATA_DIR=./data/qlib/cn_data
+
+# Output directory for experiment results
+DATA_RESULTS_DIR=./data/results
+```
+
+The HDF5 data directories can also be customized via environment variables if you prefer a different location:
+
+```bash
+# Optional: override default HDF5 data paths
+FACTOR_CoSTEER_DATA_FOLDER=/your/custom/path/factor_source_data
+FACTOR_CoSTEER_DATA_FOLDER_DEBUG=/your/custom/path/factor_source_data_debug
 ```
 
 ### 4. Run Factor Mining
