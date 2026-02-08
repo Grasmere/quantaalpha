@@ -120,9 +120,9 @@ QuantaAlpha requires two types of data: **Qlib market data** (for backtesting) a
 
 | File | Description | Size | Usage |
 | :--- | :--- | :--- | :--- |
-| `cn_data.zip` | Qlib raw market data (A-share, 2016–2025) | — | Required for Qlib initialization & backtesting |
-| `daily_pv.h5` | Pre-computed full price-volume data | — | Required for factor mining |
-| `daily_pv_debug.h5` | Pre-computed debug subset (smaller) | — | Required for factor mining (debug/validation) |
+| `cn_data.zip` | Qlib raw market data (A-share, 2016–2025) | 493 MB | Required for Qlib initialization & backtesting |
+| `daily_pv.h5` | Pre-computed full price-volume data | 398 MB | Required for factor mining |
+| `daily_pv_debug.h5` | Pre-computed debug subset (smaller) | 1.41 MB | Required for factor mining (debug/validation) |
 
 > **Why provide HDF5 files?** The system can auto-generate `daily_pv.h5` from Qlib data on first run, but this process is very slow. Downloading pre-built HDF5 files saves significant time.
 
