@@ -46,8 +46,18 @@
 <p align="center">💬 Research Direction → 🧩 Diversified Planning → 🔄 Trajectory → ✅ Validated Alpha Factors</p>
 
 **Demo**: Below is a short demo of the full flow from research direction to factor mining and backtesting UI. 
-https://github.com/user-attachments/assets/726511ce-a384-4727-a7be-948a2cf05e4b
-[📹 Watch demo video](docs/images/demo.mp4)
+
+<div align="center">
+  <video src="https://github.com/user-attachments/assets/726511ce-a384-4727-a7be-948a2cf05e4b"
+         controls
+         style="max-width: 90%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+    Your browser does not support the video tag.
+    <a href="https://github.com/user-attachments/assets/726511ce-a384-4727-a7be-948a2cf05e4b">Watch the demo video</a>.
+  </video>
+  <p style="font-size: 12px; color: #666; margin-top: 8px;">
+    ▶ Click to play the QuantaAlpha end-to-end workflow demo.
+  </p>
+</div>
 
 ---
 
